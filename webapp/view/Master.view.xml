@@ -1,0 +1,28 @@
+<mvc:View
+	controllerName="jbcourses.MasterDetailApp.controller.Master"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:core="sap.ui.core"
+	xmlns="sap.m"
+	xmlns:semantic="sap.m.semantic">
+
+	<semantic:MasterPage
+		id="page"
+		title="{i18n>ttlMasterData}"
+		navButtonPress="onNavBack"
+		showNavButton="true">
+
+		<semantic:content>
+			<List id="list" width="auto" class="sapUiSizeCompact" busyIndicatorDelay="{masterView>/delay}" noDataText="{masterView>/noDataText}"
+				mode="SingleSelectMaster" growing="true" growingScrollToLoad="true" growingThreshold="25"
+				updateFinished=".onUpdateFinished" selectionChange=".onSelectionChange">
+				<items>
+					<StandardListItem title="{i18n>tGroups}"/>
+					<StandardListItem title="{i18n>tSubGroups}"/>
+					<StandardListItem title="{i18n>tPlants}"/>
+					<StandardListItem title="{i18n>tRegions}"/>
+				</items>
+			</List>
+		</semantic:content>
+	</semantic:MasterPage>
+
+</mvc:View>

@@ -1,0 +1,26 @@
+<mvc:View
+	controllerName="jbcourses.MasterDetailApp.controller.Detail"
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:semantic="sap.f.semantic">
+
+	<!--<semantic:DetailPage-->
+	<!--	id="page"-->
+	<!--	navButtonPress="onNavBack"-->
+	<!--	showNavButton="{device>/system/phone}"-->
+	<!--	title="{i18n>detailTitle}">-->
+
+	<!--	<semantic:content>-->
+
+	<!--	</semantic:content>-->
+
+	<!--</semantic:DetailPage>-->
+	
+	<semantic:SemanticPage id="page" class="sapUiNoContentPadding" busyIndicatorDelay="{detailView>/delay}">
+		<semantic:titleHeading>
+			<Title id="thDetail" level="H2"/>
+		</semantic:titleHeading>
+		<semantic:content></semantic:content>
+	</semantic:SemanticPage>
+
+</mvc:View>
