@@ -170,24 +170,35 @@ sap.ui.define([
 				.then(oDialog => {
 					// oDialog.getBeginButton().attachPress(this.onPressLogin.bind(this, oDialog, oEntity, resolve));
 					// oDialog.getEndButton().attachPress(this.onPressCancelLogin.bind(this, oDialog, resolve));
+					let oContext = this.getModel().createEntry(this._oSmartTable.getEntitySet(), {
+						properties: {
+							GroupID: "",
+							Version: "A",
+							Language: "RU"
+						}
+					});
 					this.getView().addDependent(oDialog);
-					oDialog.setModel(this.getModel());
-					oDialog.bindObject(this._oTable.getContextByIndex(this._oTable.getSelectedIndices()[0]).getPath());
+					oDialog.setBindingContext(oContext);
 					oDialog.open();
 					this._oDialog = oDialog;
 				});
 		},
-		
+
 		onPressOKCreate: function(oEvent) {
-			this.getModel().submitChanges();
+			this.getModel().submitChanges({
+				success: () => {
+					MessageToast.show(this.getResourceBundle().getText("msgSuccessCreate"));
+				}
+			});
 			this._oDialog.destroy();
 			this._oDialog = null;
 		},
-		
+
 		onPressCancel: function(oEvent) {
+			this.getModel().resetChanges();
 			this._oDialog.destroy();
 			this._oDialog = null;
-		},    
+		},
 
 		/* =========================================================== */
 		/* begin: internal methods                                     */
