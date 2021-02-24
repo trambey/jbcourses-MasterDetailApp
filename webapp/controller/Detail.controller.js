@@ -12,10 +12,13 @@ sap.ui.define([
 	"sap/m/ObjectStatus",
 	"sap/m/Button",
 	"sap/ui/model/Filter",
-	"sap/ui/model/FilterOperator"
+	"sap/ui/model/FilterOperator",
+	"sap/m/MessageBox",
+	"sap/m/MessageToast",
+	"sap/ui/core/Fragment"
 ], function(BaseController, JSONModel, formatter, SmartTable, SmartFilterBar, OverflowToolbar, ToolbarSpacer,
 	OverflowToolbarButton,
-	OverflowToolbarToggleButton, ObjectStatus, Button, Filter, FilterOperator) {
+	OverflowToolbarToggleButton, ObjectStatus, Button, Filter, FilterOperator, MessageBox, MessageToast, Fragment) {
 	"use strict";
 
 	return BaseController.extend("jbcourses.MasterDetailApp.controller.Detail", {
@@ -88,6 +91,104 @@ sap.ui.define([
 			);
 		},
 
+		onPressOnChangeSelectionMode: function(oEvent) {
+			this.getModel("detailView").setProperty("/table/selectionMode", oEvent.getParameter("pressed") ? "Multi" : "Single");
+		},
+
+		onSelectionChange: function() {
+			this.getModel("detailView").setProperty("/table/selectedItemsCount", this._oTable.getSelectedIndices().length);
+		},
+
+		onPressDeactivateDelete: function(oEvent) {
+			let aSelectedContexts = this._oTable.getSelectedIndices()
+				.map(iSelectedIndex => this._oTable.getContextByIndex(iSelectedIndex));
+			if (this.getModel("detailView").getProperty("button/pressed/ChangeVersionMode")) {
+				MessageBox.confirm(this.getResourceBundle().getText("msgDelete"), {
+					onClose: oAction => {
+						if (oAction === MessageBox.Action.OK) {
+							aSelectedContexts.forEach(oContext => {
+								this.getModel().remove(oContext.getPath(), {
+									success: () => {
+										MessageToast.show("msgSuccessDelete");
+									}
+								});
+							});
+						}
+					}
+				});
+			} else {
+				MessageBox.confirm(this.getResourceBundle().getText("msgDeactivate"), {
+					onClose: oAction => {
+						if (oAction === MessageBox.Action.OK) {
+							aSelectedContexts.forEach(oContext => {
+								this.getModel().setProperty(oContext.getPath() + "/Version", "D");
+							});
+							this.getModel().submitChanges({
+								success: () => {
+									MessageToast.show("msgSuccessDeactivate");
+								}
+							});
+						}
+					}
+				});
+			}
+		},
+
+		onPressRestore: function(oEvent) {
+			let aSelectedContexts = this._oTable.getSelectedIndices()
+				.map(iSelectedIndex => this._oTable.getContextByIndex(iSelectedIndex));
+			MessageBox.confirm(this.getResourceBundle().getText("msgRestore"), {
+				onClose: oAction => {
+					if (oAction === MessageBox.Action.OK) {
+						aSelectedContexts.forEach(oContext => {
+							this.getModel().setProperty(oContext.getPath() + "/Version", "A");
+						});
+						this.getModel().submitChanges({
+							success: () => {
+								MessageToast.show("msgSuccessRestore");
+							}
+						});
+					}
+				}
+			});
+		},
+
+		onChangeVersionMode: function() {
+			this._oSmartTable.rebindTable();
+		},
+
+		onPressRefresh: function() {
+			this._oSmartTable.rebindTable(true);
+			MessageToast.show(this.getResourceBundle().getText("msgRefreshTable"));
+		},
+
+		onPressCreate: function() {
+			sap.ui.core.Fragment.load({
+					name: "jbcourses.MasterDetailApp.view.CreateGroup",
+					controller: this
+				})
+				.then(oDialog => {
+					// oDialog.getBeginButton().attachPress(this.onPressLogin.bind(this, oDialog, oEntity, resolve));
+					// oDialog.getEndButton().attachPress(this.onPressCancelLogin.bind(this, oDialog, resolve));
+					this.getView().addDependent(oDialog);
+					oDialog.setModel(this.getModel());
+					oDialog.bindObject(this._oTable.getContextByIndex(this._oTable.getSelectedIndices()[0]).getPath());
+					oDialog.open();
+					this._oDialog = oDialog;
+				});
+		},
+		
+		onPressOKCreate: function(oEvent) {
+			this.getModel().submitChanges();
+			this._oDialog.destroy();
+			this._oDialog = null;
+		},
+		
+		onPressCancel: function(oEvent) {
+			this._oDialog.destroy();
+			this._oDialog = null;
+		},    
+
 		/* =========================================================== */
 		/* begin: internal methods                                     */
 		/* =========================================================== */
@@ -131,8 +232,8 @@ sap.ui.define([
 					type: "Default",
 					icon: "{i18n>iChangeSelectionMode}",
 					visible: "{detailView>/button/visible/ChangeSelectionMode}",
-					//press: this.catalog.onChangeSelectionMode.bind(this),
-					pressed: "{detailView>/button/pressed/ChangeSelectionMode}"
+					pressed: "{detailView>/button/pressed/ChangeSelectionMode}",
+					press: this.onPressOnChangeSelectionMode.bind(this)
 				}),
 				new Button({
 					text: "{i18n>infSelectedItems} {detailView>/table/selectedItemsCount}",
@@ -149,8 +250,8 @@ sap.ui.define([
 					type: "Default",
 					icon: "{i18n>iDeactivateMode}",
 					visible: "{detailView>/button/visible/ChangeVersionMode}",
-					pressed: "{detailView>/button/pressed/ChangeVersionMode}"
-						//press: this.catalog.onChangeVersionMode.bind(this)
+					pressed: "{detailView>/button/pressed/ChangeVersionMode}",
+					press: this.onChangeVersionMode.bind(this)
 				}),
 				new ObjectStatus({
 					text: "{i18n>infDeactivatedModeOn}",
@@ -167,8 +268,8 @@ sap.ui.define([
 					text: "{i18n>ttCreate}",
 					//press: this.catalog.onCreate.bind(this),
 					visible: "{detailView>/button/visible/Create}",
-					enabled: "{= !${detailView>/button/pressed/ChangeVersionMode} }"
-
+					enabled: "{= !${detailView>/button/pressed/ChangeVersionMode} }",
+					press: this.onPressCreate.bind(this)
 				}),
 				new OverflowToolbarButton({
 					//id: "btnCopy",
@@ -187,7 +288,8 @@ sap.ui.define([
 					tooltip: "{i18n>ttRefresh}",
 					//press: this.catalog.onRefresh.bind(this),
 					text: "{i18n>ttRefresh}",
-					visible: "{detailView>/button/visible/Refresh}"
+					visible: "{detailView>/button/visible/Refresh}",
+					press: this.onPressRefresh.bind(this)
 				}),
 				new OverflowToolbarButton({
 					//id: "btnDeactivateDelete",
@@ -197,7 +299,8 @@ sap.ui.define([
 					visible: "{detailView>/button/visible/DeactivateDelete}",
 					type: "Default",
 					//press: this.catalog.onDeactivateDelete.bind(this),
-					enabled: "{= ${detailView>/table/selectedItemsCount} > 0 }"
+					enabled: "{= ${detailView>/table/selectedItemsCount} > 0 }",
+					press: this.onPressDeactivateDelete.bind(this)
 				}),
 				new OverflowToolbarButton({
 					//id: "btnRestore",
@@ -207,7 +310,8 @@ sap.ui.define([
 					text: "{i18n>ttRestore}",
 					//press: this.catalog.onRestore.bind(this),
 					visible: "{detailView>/button/visible/Restore}",
-					enabled: "{= ${detailView>/table/selectedItemsCount} > 0 && ${detailView>/button/pressed/ChangeVersionMode}}"
+					enabled: "{= ${detailView>/table/selectedItemsCount} > 0 && ${detailView>/button/pressed/ChangeVersionMode}}",
+					press: this.onPressRestore.bind(this)
 				})
 
 			];
@@ -236,9 +340,11 @@ sap.ui.define([
 
 			this._oTable = this._oSmartTable.getTable();
 
-			this._oTable.setSelectionMode("Single");
+			this._oTable.bindProperty("selectionMode", {
+				path: "detailView>/table/selectionMode"
+			});
 			this._oTable.setSelectionBehavior("Row");
-			//this._oTable.attachRowSelectionChange(this._onSelectionChange.bind(this));
+			this._oTable.attachRowSelectionChange(this.onSelectionChange.bind(this));
 
 			this.getModel("detailView").setProperty("/table/selectedItemsCount", 0);
 			this.getModel("detailView").setProperty("/table/selectionMode", "Single");

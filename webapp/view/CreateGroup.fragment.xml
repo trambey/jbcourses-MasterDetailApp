@@ -1,0 +1,20 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:f="sap.ui.layout.form" xmlns:l="sap.ui.layout" xmlns:core="sap.ui.core"
+	xmlns:smartForm="sap.ui.comp.smartform" xmlns:smartField="sap.ui.comp.smartfield">
+	<Dialog id="generateAnnotations" title="{@i18n>Group}" contentWidth="400px" contentHeight="250px">
+		<beginButton>
+			<Button text="{@i18n>btnOk}" press="onPressOKCreate"/>
+		</beginButton>
+		<endButton>
+			<Button text="{@i18n>btnCancel}" press="onPressCancel"/>
+		</endButton>
+		<content>
+			<!--<smartForm:SmartForm>-->
+				<!--<smartForm:Group>-->
+					<!--<smartForm:GroupElement>-->
+						<smartField:SmartField value="{GroupText}"/>
+					<!--</smartForm:GroupElement>-->
+				<!--</smartForm:Group>-->
+			<!--</smartForm:SmartForm>-->
+		</content>
+	</Dialog>
+</core:FragmentDefinition>
