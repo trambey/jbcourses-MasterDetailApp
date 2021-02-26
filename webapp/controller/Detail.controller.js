@@ -71,6 +71,7 @@ sap.ui.define([
 			this.setModel(this._oViewModel, "detailView");
 
 			this.getOwnerComponent().getModel().metadataLoaded().then(this._onMetadataLoaded.bind(this));
+			this.getOwnerComponent()._detailView = this;
 		},
 
 		/* =========================================================== */
@@ -157,19 +158,21 @@ sap.ui.define([
 			this._oSmartTable.rebindTable();
 		},
 
-		onPressRefresh: function() {
+		onPressRefresh: function(oEvent) {
+			oEvent.getSource().bindProperty("tooltip", {
+				path: "Groups('1000028')/GroupText",
+				model: undefined
+			});
 			this._oSmartTable.rebindTable(true);
 			MessageToast.show(this.getResourceBundle().getText("msgRefreshTable"));
 		},
 
 		onPressCreate: function() {
 			sap.ui.core.Fragment.load({
-					name: "jbcourses.MasterDetailApp.view.CreateGroup",
+					name: "jbcourses.MasterDetailApp.view.CreateEditGroup",
 					controller: this
 				})
 				.then(oDialog => {
-					// oDialog.getBeginButton().attachPress(this.onPressLogin.bind(this, oDialog, oEntity, resolve));
-					// oDialog.getEndButton().attachPress(this.onPressCancelLogin.bind(this, oDialog, resolve));
 					let oContext = this.getModel().createEntry(this._oSmartTable.getEntitySet(), {
 						properties: {
 							GroupID: "",
@@ -184,10 +187,24 @@ sap.ui.define([
 				});
 		},
 
+		_onPressUpdate: function(oEvent) {
+			let oContext = oEvent.getSource().getBindingContext();
+			sap.ui.core.Fragment.load({
+					name: "jbcourses.MasterDetailApp.view.CreateEditGroup",
+					controller: this
+				})
+				.then(oDialog => {
+					this.getView().addDependent(oDialog);
+					oDialog.setBindingContext(oContext);
+					oDialog.open();
+					this._oDialog = oDialog;
+				});
+		},
+
 		onPressOKCreate: function(oEvent) {
 			this.getModel().submitChanges({
 				success: () => {
-					MessageToast.show(this.getResourceBundle().getText("msgSuccessCreate"));
+					MessageToast.show(this.getResourceBundle().getText("msgSuccess"));
 				}
 			});
 			this._oDialog.destroy();
@@ -296,8 +313,7 @@ sap.ui.define([
 					//id: "btnRefresh",
 					icon: "{i18n>iRefresh}",
 					type: "Default",
-					tooltip: "{i18n>ttRefresh}",
-					//press: this.catalog.onRefresh.bind(this),
+					// tooltip: "{i18n>ttRefresh}",
 					text: "{i18n>ttRefresh}",
 					visible: "{detailView>/button/visible/Refresh}",
 					press: this.onPressRefresh.bind(this)
@@ -356,6 +372,24 @@ sap.ui.define([
 			});
 			this._oTable.setSelectionBehavior("Row");
 			this._oTable.attachRowSelectionChange(this.onSelectionChange.bind(this));
+			this._oTable.addColumn(new sap.ui.table.Column({
+				template: new sap.m.Text({
+					text: "{GroupDescription}"
+				}),
+				label: new sap.m.Label({
+					text: "{i18n>tGroupDescription}"
+				}),
+				customData: [
+					new sap.ui.core.CustomData({
+						key: "p13nData",
+						value: {
+							"columnKey": "GroupDescription",
+							"leadingProperty": "GroupDescription",
+							"columnIndex": "2"
+						}
+					})
+				]
+			}));
 
 			this.getModel("detailView").setProperty("/table/selectedItemsCount", 0);
 			this.getModel("detailView").setProperty("/table/selectionMode", "Single");
@@ -374,7 +408,7 @@ sap.ui.define([
 						icon: "{i18n>iEdit}",
 						type: "Custom",
 						text: "{i18n>ttEdit}",
-						//press: this._onUpdate.bind(this),
+						press: this._onPressUpdate.bind(this),
 						visible: "{= ${detailView>/button/visible/Update} && !${detailView>/button/pressed/ChangeVersionMode} }"
 					})
 				]

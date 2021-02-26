@@ -55,6 +55,9 @@
 			<Annotations Target="jetCloud.apps.zjblessons.jblesson02.v01.01.zjblessons_base_GroupsType/GroupText">
 				 <Annotation Term="Common.Label" String="{@i18n>tGroupText}"/>
 			</Annotations>
+			<Annotations Target="jetCloud.apps.zjblessons.jblesson02.v01.01.zjblessons_base_GroupsType/GroupDesctiption">
+				 <Annotation Term="Common.Label" String="{@i18n>tGroupDescription}"/>
+			</Annotations>
 		</Schema>
 	</edmx:DataServices>
 </edmx:Edmx>
